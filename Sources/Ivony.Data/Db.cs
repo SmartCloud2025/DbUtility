@@ -1,4 +1,5 @@
-﻿using Ivony.Data.Queries;
+﻿using Ivony.Data.Common;
+using Ivony.Data.Queries;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -22,7 +23,7 @@ namespace Ivony.Data
     /// <param name="templateText">模板文本</param>
     /// <param name="paramaters">模板参数</param>
     /// <returns>参数化查询</returns>
-    public static ParameterizedQuery Template( string templateText, object[] paramaters )
+    public static ParameterizedQuery Template( string templateText, params object[] paramaters )
     {
       return TemplateParser.ParseTemplate( templateText, paramaters );
     }
@@ -35,7 +36,7 @@ namespace Ivony.Data
     /// <param name="templateText">模板文本</param>
     /// <param name="paramaters">模板参数</param>
     /// <returns>参数化查询</returns>
-    public static ParameterizedQuery T( string templateText, object[] paramaters )
+    public static ParameterizedQuery T( string templateText, params object[] paramaters )
     {
       return Template( templateText, paramaters );
     }
@@ -62,5 +63,50 @@ namespace Ivony.Data
     {
       return null;
     }
+
+
+
+    /// <summary>
+    /// 将多个参数化查询串联起来并用指定的字符串分隔
+    /// </summary>
+    /// <param name="sperator">分隔符</param>
+    /// <param name="queries">参数化查询</param>
+    /// <returns>串联后的结果</returns>
+    public static ParameterizedQuery Join( this string sperator, params ParameterizedQuery[] queries )
+    {
+
+      if ( !queries.Any() )
+        return null;
+
+      var builder = new ParameterizedQueryBuilder();
+      queries[0].AppendTo( builder );
+
+      foreach ( var q in queries.Skip( 1 ) )
+      {
+        builder.AppendText( sperator );
+        builder.AppendPartial( q );
+      }
+
+
+      return builder.CreateQuery();
+    }
+
+
+
+    static Db()
+    {
+      AddWhiteSpaceOnConcat = true;
+    }
+
+
+    /// <summary>
+    /// 获取或设置当串联两个参数化查询时，是否应当自动插入空白字符。
+    /// </summary>
+    public static bool AddWhiteSpaceOnConcat
+    {
+      get;
+      private set;
+    }
+
   }
 }

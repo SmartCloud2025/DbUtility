@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Ivony.Data.Common;
+using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,13 +14,13 @@ namespace Ivony.Data.Queries
   /// <summary>
   /// 代表一个参数化查询
   /// </summary>
-  public class ParameterizedQuery : IDbQuery, ITemplatePartial
+  public class ParameterizedQuery : IDbQuery, IParameterizedQueryPartial
   {
 
     /// <summary>
     /// 定义匹配参数占位符的正则表达式
     /// </summary>
-    public static readonly Regex ParameterPlaceholdRegex = new Regex( @"#(?<index>[0-9]+)#" );
+    public static readonly Regex ParameterPlaceholdRegex = new Regex( @"#(?<index>[0-9]+)#", RegexOptions.Compiled );
 
 
 
@@ -50,34 +52,16 @@ namespace Ivony.Data.Queries
     /// <param name="values">参数值</param>
     public ParameterizedQuery( string template, object[] values )
     {
+
+      if ( template == null )
+        throw new ArgumentNullException( "template" );
+
+      if ( values == null )
+        throw new ArgumentNullException( "values" );
+
       TextTemplate = template;
       ParameterValues = new object[values.Length];
       values.CopyTo( ParameterValues, 0 );
-    }
-
-
-
-    /// <summary>
-    /// 创建查询命令
-    /// </summary>
-    /// <typeparam name="T">查询命令类型</typeparam>
-    /// <param name="provider">参数化查询命令提供程序</param>
-    /// <returns>查询命令</returns>
-    public T CreateCommand<T>( IParameterizedQueryParser<T> provider )
-    {
-
-      lock ( provider.SyncRoot )
-      {
-
-        var text = ParameterPlaceholdRegex.Replace( TextTemplate, ( match ) =>
-        {
-          var index = int.Parse( match.Groups["index"].Value );
-          return provider.CreateParameterPlacehold( ParameterValues[index] );
-        } );
-
-
-        return provider.CreateCommand( text.Replace( "##", "#" ) );
-      }
     }
 
 
@@ -85,7 +69,7 @@ namespace Ivony.Data.Queries
     /// 将参数化查询解析为另一个参数化查询的一部分。
     /// </summary>
     /// <param name="builder">参数化查询构建器</param>
-    public void Parse( ParameterizedQueryBuilder builder )
+    public void AppendTo( ParameterizedQueryBuilder builder )
     {
 
       int index = 0;
@@ -95,16 +79,89 @@ namespace Ivony.Data.Queries
 
         var length = match.Index - index;
         if ( length > 0 )
-          builder.Append( TextTemplate.Substring( index, length ) );
+          builder.AppendText( TextTemplate.Substring( index, length ) );
 
 
         var parameterIndex = int.Parse( match.Groups["index"].Value );
         builder.AppendParameter( ParameterValues[parameterIndex] );
 
-        index += match.Length;
+        index = match.Index + match.Length;
       }
 
-      builder.Append( TextTemplate.Substring( index, TextTemplate.Length - index ) );
+      builder.AppendText( TextTemplate.Substring( index, TextTemplate.Length - index ) );
+    }
+
+
+
+    /// <summary>
+    /// 重写 ToString 方法，输出参数化查询的字符串表达形式
+    /// </summary>
+    /// <returns>字符串表达形式</returns>
+    public override string ToString()
+    {
+      if ( stringExpression == null )
+        stringExpression = GetString();
+
+      return stringExpression;
+    }
+
+    private string stringExpression;
+
+    private string GetString()
+    {
+      var writer = new StringWriter();
+
+      writer.WriteLine( "\"" + TextTemplate.Replace( "\"", "\"\"" ) + "\"" );
+      writer.WriteLine();
+
+      for ( int i = 0; i < this.ParameterValues.Length; i++ )
+      {
+        writer.WriteLine( "#{0}#: {1}", i, ParameterValues[i] );
+      }
+
+      return writer.ToString();
+    }
+
+
+
+
+    /// <summary>
+    /// 串联两个参数化查询对象
+    /// </summary>
+    /// <param name="query1">第一个参数化查询对象</param>
+    /// <param name="query2">第二个参数化查询对象</param>
+    /// <returns>串联后的参数化查询对象</returns>
+    public static ParameterizedQuery operator +( ParameterizedQuery query1, ParameterizedQuery query2 )
+    {
+      return query1.Concat( query2 );
+    }
+
+    /// <summary>
+    /// 串联两个参数化查询对象
+    /// </summary>
+    /// <param name="query1">第一个参数化查询对象</param>
+    /// <param name="query2">第二个参数化查询对象</param>
+    /// <returns>串联后的参数化查询对象</returns>
+    public static DbExecutableQuery<ParameterizedQuery> operator +( DbExecutableQuery<ParameterizedQuery> query1, ParameterizedQuery query2 )
+    {
+      return query1.Concat( query2 );
+    }
+
+    /// <summary>
+    /// 串联两个参数化查询对象
+    /// </summary>
+    /// <param name="query1">第一个参数化查询对象</param>
+    /// <param name="query2">第二个参数化查询对象</param>
+    /// <returns>串联后的参数化查询对象</returns>
+    public static AsyncDbExecutableQuery<ParameterizedQuery> operator +( AsyncDbExecutableQuery<ParameterizedQuery> query1, ParameterizedQuery query2 )
+    {
+      return query1.Concat( query2 );
+    }
+
+
+    internal bool IsStartWithWhiteSpace()
+    {
+      return char.IsWhiteSpace( TextTemplate[0] );
     }
   }
 }

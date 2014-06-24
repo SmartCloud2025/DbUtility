@@ -34,7 +34,7 @@ namespace Ivony.Data.Queries
     /// 添加一段查询文本
     /// </summary>
     /// <param name="text">要添加到末尾的查询文本</param>
-    public void Append( string text )
+    public void AppendText( string text )
     {
       lock ( _sync )
       {
@@ -65,6 +65,10 @@ namespace Ivony.Data.Queries
     /// <param name="value">参数值</param>
     public void AppendParameter( object value )
     {
+      var partial = value as IParameterizedQueryPartial;
+      if ( partial != null )
+        AppendPartial( partial );
+
       lock ( _sync )
       {
         values.Add( value );
@@ -79,7 +83,34 @@ namespace Ivony.Data.Queries
     /// <returns>参数化查询对象</returns>
     public ParameterizedQuery CreateQuery()
     {
-      return new ParameterizedQuery( textBuilder.ToString(), values.ToArray() );
+      lock ( _sync )
+      {
+        return new ParameterizedQuery( textBuilder.ToString(), values.ToArray() );
+      }
+    }
+
+
+    /// <summary>
+    /// 在当前位置添加一个部分查询
+    /// </summary>
+    /// <param name="partial">要添加的部分查询对象</param>
+    public void AppendPartial( IParameterizedQueryPartial partial )
+    {
+      lock ( _sync )
+      {
+        partial.AppendTo( this );
+      }
+
+    }
+
+
+
+    internal bool IsEndWithWhiteSpace()
+    {
+      lock ( _sync )
+      {
+        return char.IsWhiteSpace( textBuilder[textBuilder.Length - 1] );
+      }
     }
   }
 }

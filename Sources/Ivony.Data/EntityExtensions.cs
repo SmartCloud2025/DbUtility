@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ivony.Data.Common;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace Ivony.Data
     /// <param name="query">要执行的查询</param>
     /// <param name="token">取消指示</param>
     /// <returns>实体集</returns>
-    public async static Task<T[]> ExecuteEntitiesAsync<T>( this IDbExecutableQuery query, CancellationToken token = default( CancellationToken ) ) where T : new()
+    public async static Task<T[]> ExecuteEntitiesAsync<T>( this IAsyncDbExecutableQuery query, CancellationToken token = default( CancellationToken ) ) where T : new()
     {
       var data = await query.ExecuteDataTableAsync( token );
       return data.GetRows().Select( dataItem => dataItem.ToEntity<T>() ).ToArray();
@@ -67,7 +68,7 @@ namespace Ivony.Data
     /// <param name="query">要执行的查询</param>
     /// <param name="converter">实体转换器</param>
     /// <returns>实体集</returns>
-    public static Task<T[]> ExecuteEntitiesAsync<T>( this IDbExecutableQuery query, IEntityConverter<T> converter ) where T : new()
+    public static Task<T[]> ExecuteEntitiesAsync<T>( this IAsyncDbExecutableQuery query, IEntityConverter<T> converter ) where T : new()
     {
       return ExecuteEntitiesAsync( query, CancellationToken.None, converter );
     }
@@ -80,7 +81,7 @@ namespace Ivony.Data
     /// <param name="token">取消指示</param>
     /// <param name="converter">实体转换器</param>
     /// <returns>实体集</returns>
-    public async static Task<T[]> ExecuteEntitiesAsync<T>( this IDbExecutableQuery query, CancellationToken token, IEntityConverter<T> converter ) where T : new()
+    public async static Task<T[]> ExecuteEntitiesAsync<T>( this IAsyncDbExecutableQuery query, CancellationToken token, IEntityConverter<T> converter ) where T : new()
     {
       var data = await query.ExecuteDataTableAsync( token );
       return data.GetRows().Select( dataItem => dataItem.ToEntity<T>( converter ) ).ToArray();
@@ -109,7 +110,7 @@ namespace Ivony.Data
     /// <param name="query">要执行的查询</param>
     /// <param name="converter">实体转换器</param>
     /// <returns>实体集</returns>
-    public static Task<T[]> ExecuteEntitiesAsync<T>( this IDbExecutableQuery query, Func<DataRow, T> converter )
+    public static Task<T[]> ExecuteEntitiesAsync<T>( this IAsyncDbExecutableQuery query, Func<DataRow, T> converter )
     {
       return ExecuteEntitiesAsync( query, CancellationToken.None, converter );
     }
@@ -123,7 +124,7 @@ namespace Ivony.Data
     /// <param name="token">取消指示</param>
     /// <param name="converter">实体转换器</param>
     /// <returns>实体集</returns>
-    public async static Task<T[]> ExecuteEntitiesAsync<T>( this IDbExecutableQuery query, CancellationToken token, Func<DataRow, T> converter )
+    public async static Task<T[]> ExecuteEntitiesAsync<T>( this IAsyncDbExecutableQuery query, CancellationToken token, Func<DataRow, T> converter )
     {
       var data = await query.ExecuteDataTableAsync( token );
       return data.GetRows().Select( dataItem => converter( dataItem ) ).ToArray();
@@ -138,7 +139,7 @@ namespace Ivony.Data
     /// <param name="token">取消指示</param>
     /// <param name="converter">实体转换器</param>
     /// <returns>实体集</returns>
-    public async static Task<T[]> ExecuteEntitiesAsync<T>( this IDbExecutableQuery query, CancellationToken token, Func<DataRow, CancellationToken, Task<T>> converter )
+    public async static Task<T[]> ExecuteEntitiesAsync<T>( this IAsyncDbExecutableQuery query, CancellationToken token, Func<DataRow, CancellationToken, Task<T>> converter )
     {
       var data = await query.ExecuteDataTableAsync( token );
       List<T> result = new List<T>();
@@ -175,7 +176,7 @@ namespace Ivony.Data
     /// <param name="query">要执行的查询</param>
     /// <param name="token">取消指示</param>
     /// <returns>实体</returns>
-    public async static Task<T> ExecuteEntityAsync<T>( this IDbExecutableQuery query, CancellationToken token = default( CancellationToken ) ) where T : new()
+    public async static Task<T> ExecuteEntityAsync<T>( this IAsyncDbExecutableQuery query, CancellationToken token = default( CancellationToken ) ) where T : new()
     {
       var dataItem = await query.ExecuteFirstRowAsync( token );
       return dataItem.ToEntity<T>();
@@ -205,7 +206,7 @@ namespace Ivony.Data
     /// <param name="query">要执行的查询</param>
     /// <param name="converter">实体转换方法</param>
     /// <returns>实体</returns>
-    public static Task<T> ExecuteEntityAsync<T>( this IDbExecutableQuery query, IEntityConverter<T> converter ) where T : new()
+    public static Task<T> ExecuteEntityAsync<T>( this IAsyncDbExecutableQuery query, IEntityConverter<T> converter ) where T : new()
     {
       return ExecuteEntityAsync( query, CancellationToken.None, converter );
     }
@@ -219,7 +220,7 @@ namespace Ivony.Data
     /// <param name="token">取消指示</param>
     /// <param name="converter">实体转换方法</param>
     /// <returns>实体</returns>
-    public async static Task<T> ExecuteEntityAsync<T>( this IDbExecutableQuery query, CancellationToken token, IEntityConverter<T> converter ) where T : new()
+    public async static Task<T> ExecuteEntityAsync<T>( this IAsyncDbExecutableQuery query, CancellationToken token, IEntityConverter<T> converter ) where T : new()
     {
       var dataItem = await query.ExecuteFirstRowAsync( token );
       return dataItem.ToEntity<T>( converter );
@@ -248,7 +249,7 @@ namespace Ivony.Data
     /// <param name="query">要执行的查询</param>
     /// <param name="converter">实体转换方法</param>
     /// <returns>实体</returns>
-    public static Task<T> ExecuteEntityAsync<T>( this IDbExecutableQuery query, Func<DataRow, T> converter )
+    public static Task<T> ExecuteEntityAsync<T>( this IAsyncDbExecutableQuery query, Func<DataRow, T> converter )
     {
       return ExecuteEntityAsync( query, CancellationToken.None, converter );
     }
@@ -262,7 +263,7 @@ namespace Ivony.Data
     /// <param name="token">取消指示</param>
     /// <param name="converter">实体转换方法</param>
     /// <returns>实体</returns>
-    public async static Task<T> ExecuteEntityAsync<T>( this IDbExecutableQuery query, CancellationToken token, Func<DataRow, T> converter )
+    public async static Task<T> ExecuteEntityAsync<T>( this IAsyncDbExecutableQuery query, CancellationToken token, Func<DataRow, T> converter )
     {
       var dataItem = await query.ExecuteFirstRowAsync( token );
       return converter( dataItem );
@@ -277,7 +278,7 @@ namespace Ivony.Data
     /// <param name="token">取消指示</param>
     /// <param name="converter">异步实体转换方法</param>
     /// <returns>实体</returns>
-    public async static Task<T> ExecuteEntityAsync<T>( this IDbExecutableQuery query, CancellationToken token, Func<DataRow, CancellationToken, Task<T>> converter )
+    public async static Task<T> ExecuteEntityAsync<T>( this IAsyncDbExecutableQuery query, CancellationToken token, Func<DataRow, CancellationToken, Task<T>> converter )
     {
       var dataItem = await query.ExecuteFirstRowAsync( token );
       return await converter( dataItem, token );

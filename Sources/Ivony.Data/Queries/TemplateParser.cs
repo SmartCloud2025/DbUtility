@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Ivony.Data.Queries;
+using Ivony.Data.Common;
 
 namespace Ivony.Data
 {
@@ -158,7 +159,7 @@ namespace Ivony.Data
       for ( int parameterIndex = begin; parameterIndex < end; parameterIndex++ )
       {
         AddParameter( builder, parameters[parameterIndex] );
-        builder.Append( "," );
+        builder.AppendText( "," );
       }
 
       AddParameter( builder, parameters[end] );
@@ -168,17 +169,17 @@ namespace Ivony.Data
     {
 
 
-      var partial = value as ITemplatePartial;
+      var partial = value as IParameterizedQueryPartial;
       if ( partial == null )
       {
         var container = value as IDbQueryContainer;
         if ( container != null )
-          partial = container.Query as ITemplatePartial;
+          partial = container.Query as IParameterizedQueryPartial;
       }
 
       if ( partial != null )
       {
-        partial.Parse( builder );
+        partial.AppendTo( builder );
         return;
       }
 
@@ -189,7 +190,7 @@ namespace Ivony.Data
         for ( int i = 0; i < array.Length - 1; i++ )
         {
           AddParameter( builder, array.GetValue( i ) );
-          builder.Append( "," );
+          builder.AppendText( "," );
         }
 
         AddParameter( builder, array.GetValue( array.Length ) );

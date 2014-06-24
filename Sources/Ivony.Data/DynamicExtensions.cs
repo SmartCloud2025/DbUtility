@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ivony.Data.Common;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -61,7 +62,7 @@ namespace Ivony.Data
     /// <param name="query">要执行的查询</param>
     /// <param name="token">取消指示</param>
     /// <returns>查询结果</returns>
-    public static async Task<dynamic[]> ExecuteDynamicsAsync( this IDbExecutableQuery query, CancellationToken token = default( CancellationToken ) )
+    public static async Task<dynamic[]> ExecuteDynamicsAsync( this IAsyncDbExecutableQuery query, CancellationToken token = default( CancellationToken ) )
     {
       var data = await query.ExecuteDataTableAsync( token );
       return ToDynamics( data );
@@ -87,7 +88,7 @@ namespace Ivony.Data
     /// </summary>
     /// <param name="query">要执行的查询</param>
     /// <returns>查询结果</returns>
-    public static async Task<dynamic> ExecuteDynamicObjectAsync( this IDbExecutableQuery query )
+    public static async Task<dynamic> ExecuteDynamicObjectAsync( this IAsyncDbExecutableQuery query )
     {
       var dataItem = await query.ExecuteFirstRowAsync();
       return ToDynamic( dataItem );
